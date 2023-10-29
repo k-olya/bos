@@ -7,7 +7,9 @@ window.onload = function () {
   bos.addLayer({
     image: spritesheet,
     textureFilter: gl.NEAREST,
-    vertexAnimationCode: "",
+    vertexAnimationCode: `
+      pos += sin(u_time * .2 * 3.14) * 1.0;
+    `,
     customVarying: "",
     customUniforms: "",
     customFragmentShader: "",
@@ -28,8 +30,7 @@ window.onload = function () {
 
   function render(time) {
     window.requestAnimationFrame(render);
-
-    bos.render(time % 1);
+    bos.render(time / 1000);
   }
   render();
 
