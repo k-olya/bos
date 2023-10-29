@@ -16,6 +16,8 @@ const vertexShaderSource = (a, v) => `
 
         ${a}
 
+        pos = pos * scale + c;
+
         v_uv = uv;
         v_alpha = alpha;
         gl_Position = vec4(pos, 0.0, 1.0);

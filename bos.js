@@ -1,4 +1,5 @@
 const SPRITE_BYTES = 4 * 16 * 6;
+const SPRITE_FLOATS = 16 * 6;
 const MAX_BUFFER_SIZE_INCREMENT = 256;
 
 function Bos(gl, width, height) {
@@ -6,6 +7,8 @@ function Bos(gl, width, height) {
   this.width = width;
   this.height = height;
   this.layers = [];
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 
 Bos.prototype.addLayer = function (opts) {
@@ -13,9 +16,10 @@ Bos.prototype.addLayer = function (opts) {
 };
 
 Bos.prototype.render = function (time) {
+  const gl = this.gl;
   this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
   this.gl.viewport(0, 0, this.width, this.height);
-  // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+  this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
   for (let layer of this.layers) {
     layer.render(time);
   }
@@ -37,8 +41,9 @@ function Layer(gl, options) {
   this.gl = gl;
   this.size = 1;
   this.length = 0;
-  this.ab = new ArrayBuffer(this.size * SPRITE_BYTES);
-  this.data = new Float32Array(this.ab);
+  // this.ab = new ArrayBuffer(this.size * SPRITE_BYTES);
+  // this.data = new Float32Array(this.ab);
+  this.data = new Float32Array(this.size * SPRITE_FLOATS);
 
   this.textureFilter = opts.textureFilter;
   this.image = opts.image;
@@ -67,7 +72,7 @@ const vertices = [
 
 Layer.prototype.addSprites = function (a) {
   const len = a.length + this.length;
-  const mod = true;
+  let mod = true;
   // resize the underlying array buffer to fit new content
   if (len > this.size) {
     while (len > this.size) {
@@ -76,12 +81,14 @@ Layer.prototype.addSprites = function (a) {
         Math.min(this.size, MAX_BUFFER_SIZE_INCREMENT)
       );
     }
-    this.ab.resize(this.size * SPRITE_BYTES);
+    let data = new Float32Array(this.size * SPRITE_FLOATS);
+    data.set(this.data, 0);
+    this.data = data;
     mod = false;
   }
   // set vertex attributes
   for (let i = 0; i < a.length; i++) {
-    let index = (this.length + i) * SPRITE_BYTES;
+    let index = (this.length + i) * SPRITE_FLOATS;
     let c = a[i];
     let custom = c.custom || [];
     let chunk = vertices.flatMap(vx => [
@@ -92,8 +99,8 @@ Layer.prototype.addSprites = function (a) {
 
       c.rot || 0,
       c.alpha || 1,
-      c[vx[2]] || 0, // uv.x
-      c[vx[3]] || 0, // uv.y
+      (c[vx[2]] || 0) / this.textureWidth, // uv.x
+      (c[vx[3]] || 0) / this.textureHeight, // uv.y
 
       vx[0] || 0, // pos.x
       vx[1] || 0, // pos.y
