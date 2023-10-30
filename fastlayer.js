@@ -1,36 +1,39 @@
-const SPRITE_BYTES = 4 * 16 * 6;
-const SPRITE_FLOATS = 16 * 6;
-const MAX_BUFFER_SIZE_INCREMENT = 256;
+const fastVertexShaderSource = (a, v) => `
+    attribute vec4 a_all;
+    ${v}
+    varying vec2 v_uv;
+    
+    uniform float u_time;
 
-function Bos(gl, width, height) {
-  this.gl = gl;
-  this.width = width;
-  this.height = height;
-  this.layers = [];
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-}
+    void main() {
+        vec2 pos = a_all.xy;
+        vec2 uv = a_all.ba;
 
-Bos.prototype.addLayer = function (opts) {
-  this.layers.push(new Layer(this.gl, opts));
+        ${a}
+
+        v_uv = uv;
+        gl_Position = vec4(pos, 0.0, 1.0);
+    }
+
+`;
+
+const fastFragmentShaderSource = `
+    precision mediump float;
+    uniform sampler2D u_texture;
+
+    varying vec2 v_uv;
+
+    void main() {
+        vec4 col = texture2D(u_texture, v_uv);
+        gl_FragColor =vec4(col.xyz, 0.5 * col.a);
+    }
+`;
+
+Bos.prototype.addFastLayer = function (opts) {
+  this.layers.push(new FastLayer(this.gl, opts));
 };
 
-Bos.prototype.render = function (time) {
-  const gl = this.gl;
-  this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-  this.gl.viewport(0, 0, this.width, this.height);
-  this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-  for (let layer of this.layers) {
-    layer.render(time);
-  }
-};
-
-Bos.prototype.resize = function (width, height) {
-  this.width = width;
-  this.height = height;
-};
-
-function Layer(gl, options) {
+function FastLayer(gl, options) {
   const opts = {
     image: null,
     textureFilter: gl.LINEAR,
@@ -43,7 +46,7 @@ function Layer(gl, options) {
   this.length = 0;
   // this.ab = new ArrayBuffer(this.size * SPRITE_BYTES);
   // this.data = new Float32Array(this.ab);
-  this.data = new Float32Array(this.size * SPRITE_FLOATS);
+  this.data = new Float32Array(this.size * 24);
 
   this.textureFilter = opts.textureFilter;
   this.image = opts.image;
@@ -54,27 +57,11 @@ function Layer(gl, options) {
   this.dirty = { compile: true, texture: true, vbo: true };
 }
 
-const vertices = [
-  // bottom left corner
-  [-0.5, -0.5, "uvleft", "uvbottom"],
-  // bottom right corner
-  [0.5, -0.5, "uvright", "uvbottom"],
-  // top left corner
-  [-0.5, 0.5, "uvleft", "uvtop"],
-
-  // top left corner
-  [-0.5, 0.5, "uvleft", "uvtop"],
-  // bottom right corner
-  [0.5, -0.5, "uvright", "uvbottom"],
-  // top right corner
-  [0.5, 0.5, "uvright", "uvtop"],
-];
-
-Layer.prototype.addSprites = function (a) {
+FastLayer.prototype.addSprites = function (a) {
   this.modSprites(a, this.length);
 };
 
-Layer.prototype.modSprites = function (a, start = 0) {
+FastLayer.prototype.modSprites = function (a, start = 0) {
   const len = a.length + start;
   let mod = true;
   // resize the underlying array buffer to fit new content
@@ -85,36 +72,21 @@ Layer.prototype.modSprites = function (a, start = 0) {
         Math.min(this.size, MAX_BUFFER_SIZE_INCREMENT)
       );
     }
-    let data = new Float32Array(this.size * SPRITE_FLOATS);
+    let data = new Float32Array(this.size * 24);
     data.set(this.data, 0);
     this.data = data;
     mod = false;
   }
   // set vertex attributes
   for (let i = 0; i < a.length; i++) {
-    let index = (start + i) * SPRITE_FLOATS;
+    let index = (start + i) * 24;
     let c = a[i];
     let custom = c.custom || [];
     let chunk = vertices.flatMap(vx => [
-      c.x || 0,
-      c.y || 0,
-      c.scalex || 1,
-      c.scaley || 1,
-
-      c.rot || 0,
-      c.alpha || 1,
+      (c.x || 0) + vx[0] * c.scalex, // pos.x
+      (c.y || 0) + vx[1] * c.scaley, // pos.y
       (c[vx[2]] || 0) / this.textureWidth, // uv.x
       (c[vx[3]] || 0) / this.textureHeight, // uv.y
-
-      vx[0] || 0, // pos.x
-      vx[1] || 0, // pos.y
-      custom[0] || 0,
-      custom[1] || 0,
-
-      custom[2] || 0,
-      custom[3] || 0,
-      custom[4] || 0,
-      custom[5] || 0,
     ]);
     this.data.set(chunk, index);
   }
@@ -136,21 +108,24 @@ Layer.prototype.modSprites = function (a, start = 0) {
   this.length = len;
 };
 
-Layer.prototype.addSprite = function (sprite) {
+FastLayer.prototype.addSprite = function (sprite) {
   return this.addSprites([sprite]);
 };
 
-Layer.prototype.compile = function () {
+FastLayer.prototype.compile = function () {
   const gl = this.gl;
   this.vertexShader = createShader(
     gl,
     gl.VERTEX_SHADER,
-    shaders.vertex(this.vertexAnimationCode, this.customVars)
+    fastVertexShaderSource(
+      this.vertexAnimationCode || "",
+      this.customVars || ""
+    )
   );
   this.fragmentShader = createShader(
     gl,
     gl.FRAGMENT_SHADER,
-    shaders.fragment(this.customFragmentShader)
+    this.customFragmentShader || fastFragmentShaderSource
   );
   this.program = createProgram(gl, this.vertexShader, this.fragmentShader);
   this.attribute = gl.getAttribLocation(this.program, "a_all");
@@ -160,14 +135,14 @@ Layer.prototype.compile = function () {
   this.dirty.compile = false;
 };
 
-Layer.prototype.createvbo = function () {
+FastLayer.prototype.createvbo = function () {
   this.vertexBuffer = createVertexBuffer(this.gl, this.data);
   this.dirty.vbo = false;
   this.dirty.vboStart = false;
   this.dirty.vboEnd = false;
 };
 
-Layer.prototype.createTexture = function () {
+FastLayer.prototype.createTexture = function () {
   this.texture = createTexture(
     this.gl,
     this.gl.TEXTURE0,
@@ -184,7 +159,7 @@ Layer.prototype.createTexture = function () {
   this.dirty.texture = false;
 };
 
-Layer.prototype.render = function (time) {
+FastLayer.prototype.render = function (time) {
   // send modified properties to gpu
   if (this.dirty.compile) {
     this.compile();
@@ -201,11 +176,10 @@ Layer.prototype.render = function (time) {
   // select render shader
   gl.useProgram(this.program);
   // pass attriputes
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-  for (let i = 0; i < 4; i++) {
-    gl.enableVertexAttribArray(this.attribute + i);
-    gl.vertexAttribPointer(this.attribute + i, 4, gl.FLOAT, false, 64, i * 16);
-  }
+  enableVertexBuffer(gl, this.attribute, {
+    buffer: this.vertexBuffer,
+    size: 4,
+  });
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, this.texture);
   gl.uniform1i(this.uniforms.u_texture, 0);
