@@ -95,27 +95,32 @@ Layer.prototype.modSprites = function (a, start = 0) {
     let index = (start + i) * SPRITE_FLOATS;
     let c = a[i];
     let custom = c.custom || [];
-    let chunk = vertices.flatMap(vx => [
-      c.x || 0,
-      c.y || 0,
-      c.scalex || 1,
-      c.scaley || 1,
+    let chunk = vertices.flatMap(vx => {
+      // calculate uv coordinates based on options and vertex data
+      let u = c.u + (vx[2] === "uvright" ? c.w : 0) || 0;
+      let v = c.v + (vx[3] === "uvbottom" ? c.h : 0) || 0;
+      return [
+        c.x || 0,
+        c.y || 0,
+        c.scalex || 1,
+        c.scaley || 1,
 
-      c.rot || 0,
-      c.alpha || 1,
-      (c[vx[2]] || 0) / this.textureWidth, // uv.x
-      (c[vx[3]] || 0) / this.textureHeight, // uv.y
+        c.rot || 0,
+        c.alpha || 1,
+        u / this.textureWidth, // uv.x
+        1 - v / this.textureHeight, // uv.y
 
-      vx[0] || 0, // pos.x
-      vx[1] || 0, // pos.y
-      custom[0] || 0,
-      custom[1] || 0,
+        vx[0] || 0, // pos.x
+        vx[1] || 0, // pos.y
+        custom[0] || 0,
+        custom[1] || 0,
 
-      custom[2] || 0,
-      custom[3] || 0,
-      custom[4] || 0,
-      custom[5] || 0,
-    ]);
+        custom[2] || 0,
+        custom[3] || 0,
+        custom[4] || 0,
+        custom[5] || 0,
+      ];
+    });
     this.data.set(chunk, index);
   }
   // mark vbo data as modified

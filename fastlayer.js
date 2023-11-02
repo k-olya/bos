@@ -82,12 +82,16 @@ FastLayer.prototype.modSprites = function (a, start = 0) {
     let index = (start + i) * 24;
     let c = a[i];
     let custom = c.custom || [];
-    let chunk = vertices.flatMap(vx => [
-      (c.x || 0) + vx[0] * c.scalex, // pos.x
-      (c.y || 0) + vx[1] * c.scaley, // pos.y
-      (c[vx[2]] || 0) / this.textureWidth, // uv.x
-      (c[vx[3]] || 0) / this.textureHeight, // uv.y
-    ]);
+    let chunk = vertices.flatMap(vx => {
+      let u = c.u + (vx[2] === "uvright" ? c.w : 0) || 0;
+      let v = c.v + (vx[3] === "uvbottom" ? c.h : 0) || 0;
+      return [
+        (c.x || 0) + vx[0] * c.scalex, // pos.x
+        (c.y || 0) + vx[1] * c.scaley, // pos.y
+        u / this.textureWidth, // uv.x
+        1 - v / this.textureHeight, // uv.y
+      ];
+    });
     this.data.set(chunk, index);
   }
   // mark vbo data as modified

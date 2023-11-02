@@ -1,6 +1,6 @@
 const MODE = "gpu";
 const SIZE = 0.05;
-const SAS = 1e5; // qty
+const SAS = 1e4; // qty
 console.log(`qty: ${SAS.toExponential()}`);
 
 window.onload = function () {
@@ -33,6 +33,7 @@ window.onload = function () {
 
   var positions = [];
   var scales = [];
+  var alphas = [];
   var customs = [];
   for (let i = 0; i < SAS; i++) {
     positions.push([(0.5 - Math.random()) * 2, (0.5 - Math.random()) * 2]);
@@ -47,10 +48,10 @@ window.onload = function () {
       rot: 0,
       scalex: scales[i][0],
       scaley: scales[i][0],
-      uvbottom: 65,
-      uvleft: 193,
-      uvtop: 128,
-      uvright: 255,
+      u: 193,
+      w: 63,
+      v: 0,
+      h: 63,
       alpha: 0.4 + 0.6 * Math.random(),
       custom: [customs[i]],
     });
@@ -72,10 +73,10 @@ window.onload = function () {
             rot: 0,
             scalex: scales[i][0],
             scaley: scales[i][1],
-            uvbottom: 65,
-            uvleft: 193,
-            uvtop: 128,
-            uvright: 255,
+            u: 193,
+            w: 63,
+            v: 0,
+            h: 63,
             alpha: 0.5, // 0.4 + 0.6 * Math.random(),
             custom: [customs[i]],
           },
