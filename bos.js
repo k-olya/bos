@@ -56,7 +56,7 @@ function Bos(gl, width, height, options = {}) {
   this.gl = gl;
   this.width = width;
   this.height = height;
-  this.aspect = opts.aspect;
+  this.aspect = opts.aspect === true ? height / width : opts.aspect;
   this.layers = [];
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -79,6 +79,15 @@ Bos.prototype.render = function (time) {
 Bos.prototype.resize = function (width, height) {
   this.width = width;
   this.height = height;
+  this.aspect = this.aspect && height / width;
+};
+
+Bos.prototype.canvasXtoGl = function (x) {
+  return ((x / this.width) * 2 - 1) / (this.aspect || 1);
+};
+
+Bos.prototype.canvasYtoGl = function (y) {
+  return 1 - (y / this.height) * 2;
 };
 
 function Layer(bos, options) {
@@ -161,11 +170,13 @@ Layer.prototype.modSprites = function (a, start = 0) {
       // calculate uv coordinates based on options and vertex data
       let u = c.u + (vx[2] === "uvright" ? c.w : 0) || 0;
       let v = c.v + (vx[3] === "uvbottom" ? c.h : 0) || 0;
+      let scaley = defIfUndef(c.scaley, 1);
+      let scalex = defIfUndef(c.scalex, (c.w / c.h) * scaley || scaley);
       return [
         c.x || 0,
         c.y || 0,
-        defIfUndef(c.scalex, 1),
-        defIfUndef(c.scaley, 1),
+        scalex,
+        scaley,
 
         c.rot || 0,
         defIfUndef(c.alpha, 1),
@@ -212,7 +223,7 @@ const attrOrder = ["x", "y", "scalex", "scaley", "rot", "alpha", "u", "v"];
 Layer.prototype.patchSprite = function (c, i = 0) {
   let custom = c.custom || [];
 
-  for (let j = 0; j < 4; j++) {
+  for (let j = 0; j < 6; j++) {
     const index = i * SPRITE_FLOATS + j * 16;
     for (let k = 0; k < 6; k++) {
       if (c[attrOrder[k]] !== undefined) {
@@ -367,7 +378,7 @@ Layer.prototype.render = function (time) {
 
   // pass aspect ratio
   if (this.bos && this.bos.aspect) {
-    gl.uniform2f(this.uniforms.u_aspect, this.bos.height / this.bos.width, 1);
+    gl.uniform2f(this.uniforms.u_aspect, this.bos.aspect, 1);
   } else {
     gl.uniform2f(this.uniforms.u_aspect, 1, 1);
   }

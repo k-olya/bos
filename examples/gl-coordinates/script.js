@@ -31,6 +31,15 @@ window.onload = function () {
     w: 63.2,
     h: 57.2,
   });
+  bos.layers[0].addSprite({
+    x: 0,
+    y: 0,
+    u: 231.4,
+    v: 99.4,
+    w: 17.2,
+    h: 25.2,
+    scaley: 0.1,
+  });
 
   // render loop
   function render(time) {
@@ -39,6 +48,13 @@ window.onload = function () {
     bos.render(time / 1000);
   }
   render();
+
+  window.addEventListener("mousemove", function (e) {
+    bos.layers[0].patchSprite(
+      { x: bos.canvasXtoGl(e.clientX), y: bos.canvasYtoGl(e.clientY) },
+      1
+    );
+  });
 
   // update width and height on resize
   window.addEventListener("resize", function () {
