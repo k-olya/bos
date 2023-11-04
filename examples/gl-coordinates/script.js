@@ -22,7 +22,7 @@ window.onload = function () {
   // setup layer
   bos.addLayer(config);
 
-  // add a sprite
+  // add a couple of sprites
   bos.layers[0].addSprite({
     x: 0,
     y: 0,
@@ -49,11 +49,21 @@ window.onload = function () {
   }
   render();
 
+  // update sprites on mousemove
   window.addEventListener("mousemove", function (e) {
+    // convert screen space (pixel) coordinates to gl's [-1; 1] space
+    const x = bos.canvasXtoGl(e.clientX);
+    const y = bos.canvasYtoGl(e.clientY);
+    // patch sprite rotation
     bos.layers[0].patchSprite(
-      { x: bos.canvasXtoGl(e.clientX), y: bos.canvasYtoGl(e.clientY) },
-      1
+      {
+        rot: Math.atan2(y, x) - Math.PI / 2,
+      },
+      0
     );
+    // make sprite a cursor
+    // substract from y to align cursor with the pointy hat
+    bos.layers[0].patchSprite({ x, y: y - 0.045 }, 1);
   });
 
   // update width and height on resize

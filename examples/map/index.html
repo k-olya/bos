@@ -14,16 +14,26 @@
       #canvas {
         width: 100%;
         height: 100vh;
-        cursor: crosshair;
+        cursor: grab;
+      }
+      #canvas.grabbing {
+        cursor: grabbing;
       }
     </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <canvas id="canvas" class="w-screen h-screen cursor-crosshair"></canvas>
+    <div
+      class="fixed right-0 top-0 bg-opacity-50 bg-black text-white font-mono px-4 py-3"
+    >
+      <p>Total quantity: <span id="totalSpan"></span></p>
+      <p>Updated every 20ms: <span id="updatedSpan"></span></p>
+      <p>FPS: <span id="fpsSpan"></span></p>
+    </div>
     <!-- try id="spritesheet" src="/palette.png" to make a color picker -->
-    <!-- <img id="spritesheet" src="/spritesheet.png" /> -->
-    <img id="spritesheet" src="../map/commercial-airplane.png" />
-    <img id="palette" src="/palette.png" />
+    <img id="map" src="openstreetmap.png" />
+    <img id="spritesheet" src="commercial-airplane.png" />
     <script src="/gl-utils.js"></script>
     <script src="/bos.js"></script>
     <script src="script.js"></script>

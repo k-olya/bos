@@ -20,9 +20,25 @@ const vertexShaderSource = (a, v, u) => `
         vec2 uv = a_all[1].ba;
         vec2 pos = a_all[2].xy;
 
+        float custom0 = a_all[2][2];
+        float custom1 = a_all[2][3];
+        float custom2 = a_all[3][0];
+        float custom3 = a_all[3][1];
+        float custom4 = a_all[3][2];
+        float custom5 = a_all[3][3];
+
         ${a || ""}
 
+        // rotate
+        float _sin = sin(rot);
+        float _cos = cos(rot);
+        mat2 rotationMatrix = mat2(_cos, _sin, -_sin, _cos);
+        pos = rotationMatrix * pos;
+
+        // scale and translate
         pos = pos * scale + c;
+
+        // apply aspect ratio
         pos *= u_aspect;
 
         v_uv = uv;
