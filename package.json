@@ -1,0 +1,26 @@
+{
+  "name": "bos",
+  "version": "0.1.0",
+  "description": "buttload of sprites - a webgl sprite renderer focused on performance and shader-based animation",
+  "main": "bos.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "start": "python -m http.server --bind 0.0.0.0 8080",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/k-olya/bos.git"
+  },
+  "keywords": [
+    "webgl"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/k-olya/bos/issues"
+  },
+  "homepage": "https://github.com/k-olya/bos#readme"
+}

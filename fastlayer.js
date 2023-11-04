@@ -53,6 +53,7 @@ function FastLayer(gl, options) {
   this.textureWidth = opts.image.naturalWidth;
   this.textureHeight = opts.image.naturalHeight;
   this.vertexAnimationCode = opts.vertexAnimationCode;
+  this.customFragmentShader = opts.customFragmentShader;
 
   this.dirty = { compile: true, texture: true, vbo: true };
 }

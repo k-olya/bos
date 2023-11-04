@@ -2,6 +2,49 @@ const SPRITE_BYTES = 4 * 16 * 6;
 const SPRITE_FLOATS = 16 * 6;
 const MAX_BUFFER_SIZE_INCREMENT = 256;
 
+const vertexShaderSource = (a, v) => `
+    attribute mat4 a_all;
+    ${v || ""}
+    varying vec2 v_uv;
+    varying float v_alpha;
+    
+    uniform highp float u_time;
+
+    void main() {
+        vec2 c = a_all[0].xy;
+        vec2 scale = a_all[0].ba;
+        float rot = a_all[1][0];
+        float alpha = a_all[1][1];
+        vec2 uv = a_all[1].ba;
+        vec2 pos = a_all[2].xy;
+
+        ${a || ""}
+
+        pos = pos * scale + c;
+
+        v_uv = uv;
+        v_alpha = alpha;
+        gl_Position = vec4(pos, 0.0, 1.0);
+    }
+
+`;
+
+const fragmentShaderSource = custom =>
+  custom ||
+  `
+    precision mediump float;
+    uniform sampler2D u_texture;
+
+    varying vec2 v_uv;
+    varying float v_alpha;
+
+    void main() {
+        vec2 st = v_uv;
+        vec4 col = texture2D(u_texture, st);
+        gl_FragColor = vec4(col.xyz, col.a * v_alpha);
+    }
+`;
+
 function Bos(gl, width, height) {
   this.gl = gl;
   this.width = width;
@@ -50,6 +93,7 @@ function Layer(gl, options) {
   this.textureWidth = opts.image.naturalWidth;
   this.textureHeight = opts.image.naturalHeight;
   this.vertexAnimationCode = opts.vertexAnimationCode;
+  this.customFragmentShader = opts.customFragmentShader;
 
   this.dirty = { compile: true, texture: true, vbo: true };
 }
@@ -150,12 +194,12 @@ Layer.prototype.compile = function () {
   this.vertexShader = createShader(
     gl,
     gl.VERTEX_SHADER,
-    shaders.vertex(this.vertexAnimationCode, this.customVars)
+    vertexShaderSource(this.vertexAnimationCode, this.customVars)
   );
   this.fragmentShader = createShader(
     gl,
     gl.FRAGMENT_SHADER,
-    shaders.fragment(this.customFragmentShader)
+    fragmentShaderSource(this.customFragmentShader)
   );
   this.program = createProgram(gl, this.vertexShader, this.fragmentShader);
   this.attribute = gl.getAttribLocation(this.program, "a_all");
