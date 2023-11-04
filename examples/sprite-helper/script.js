@@ -6,14 +6,14 @@
 
 const ZOOM_BASE = 1.25;
 const ZOOM_CAP = 20;
-const PADDING = 0.2;
+const PADDING = 0.4;
 
 window.onload = function () {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   var gl = canvas.getContext("webgl2");
 
-  var bos = new Bos(gl, canvas.width, canvas.height);
+  var bos = new Bos(gl, canvas.width, canvas.height, { aspect: false });
 
   const config = {
     image: spritesheet,
@@ -35,7 +35,7 @@ window.onload = function () {
   bos.addLayer(config);
   // selection box layer
   bos.addLayer({ ...config, image: palette });
-  // third layer to render sprites over selection
+  // third layer to render the selected sprite
   bos.addLayer({ ...config, vertexAnimationCode: "" });
 
   const texturew = spritesheet.naturalWidth;
@@ -84,11 +84,6 @@ window.onload = function () {
     ((x * 2) / window.innerWidth - 1) / Math.pow(ZOOM_BASE, zoom) - centerx;
   const screenYToGl = y =>
     (1 - (y * 2) / window.innerHeight) / Math.pow(ZOOM_BASE, zoom) - centery;
-
-  const glXToScreen = x =>
-    ((x + centerx * Math.pow(ZOOM_BASE, zoom) + 1) * window.innerWidth) / 2;
-  const glYToScreen = y =>
-    ((y + centery * Math.pow(ZOOM_BASE, zoom) - 1) * window.innerWidth) / -2;
 
   const round = (x, y) => Math.round(x * y) / y;
 
@@ -177,10 +172,17 @@ window.onload = function () {
       const uvwh = {
         u: (startx + 1) * coeffx + PADDING,
         v: (1 - starty) * coeffy + PADDING,
-        w: selectionw * coeffx - PADDING,
-        h: Math.abs(selectionh) * coeffy - PADDING,
+        w: selectionw * coeffx - PADDING * 2,
+        h: Math.abs(selectionh) * coeffy - PADDING * 2,
       };
-      const sprite = { ...uvwh, x: 0.75, y: -0.75, scalex: 0.5, scaley: 0.5 };
+      const sprite = {
+        ...uvwh,
+        x: 0.75,
+        y: -0.75,
+        // multiply by aspect ratio to get a nice looking sprite
+        scalex: (0.5 * canvas.height) / canvas.width,
+        scaley: 0.5,
+      };
       console.log(JSON.stringify({ ...uvwh, x, y, scalex, scaley }));
       bos.layers[2].modSprites([sprite], 0);
     }

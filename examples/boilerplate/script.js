@@ -26,13 +26,10 @@ window.onload = function () {
   bos.layers[0].addSprite({
     x: 0,
     y: 0,
-    rot: 0,
-    scalex: 0.3,
-    scaley: 0.3,
-    u: 240,
-    w: 15,
-    v: 48,
-    h: 15,
+    u: 192.4,
+    v: 0.4,
+    w: 63.2,
+    h: 63.2,
   });
 
   // render loop

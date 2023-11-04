@@ -10,6 +10,7 @@ const vertexShaderSource = (a, v, u) => `
     ${u || ""}
     
     uniform highp float u_time;
+    uniform vec2 u_aspect;
 
     void main() {
         vec2 c = a_all[0].xy;
@@ -22,6 +23,7 @@ const vertexShaderSource = (a, v, u) => `
         ${a || ""}
 
         pos = pos * scale + c;
+        pos *= u_aspect;
 
         v_uv = uv;
         v_alpha = alpha;
@@ -46,17 +48,22 @@ const fragmentShaderSource = custom =>
     }
 `;
 
-function Bos(gl, width, height) {
+function Bos(gl, width, height, options = {}) {
+  const opts = {
+    aspect: true,
+    ...options,
+  };
   this.gl = gl;
   this.width = width;
   this.height = height;
+  this.aspect = opts.aspect;
   this.layers = [];
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 
 Bos.prototype.addLayer = function (opts) {
-  this.layers.push(new Layer(this.gl, opts));
+  this.layers.push(new Layer(this, opts));
 };
 
 Bos.prototype.render = function (time) {
@@ -74,7 +81,9 @@ Bos.prototype.resize = function (width, height) {
   this.height = height;
 };
 
-function Layer(gl, options) {
+function Layer(bos, options) {
+  const gl = bos.gl;
+  this.bos = bos;
   const opts = {
     image: null,
     textureFilter: gl.LINEAR,
@@ -260,6 +269,7 @@ Layer.prototype.compile = function () {
     this.program,
     "u_time",
     "u_texture",
+    "u_aspect",
     ...this.customUniformsList
   );
 
@@ -303,7 +313,7 @@ Layer.prototype.setUniforms = function (uniforms) {
 
 Layer.prototype.setUniformsGL = function (uniforms) {
   for (u in uniforms) {
-    // if uniform is not used byt the shader
+    // if uniform is not used by the shader
     // skip iteration
     if (!this.uniforms[u]) continue;
     if (!this.customUniformsList.includes(u)) {
@@ -350,8 +360,16 @@ Layer.prototype.render = function (time) {
   gl.uniform1i(this.uniforms.u_texture, 0);
   gl.uniform1f(this.uniforms.u_time, time);
 
+  // pass user uniforms to the shader
   if (this.uniformValues) {
     this.setUniformsGL(this.uniformValues);
+  }
+
+  // pass aspect ratio
+  if (this.bos && this.bos.aspect) {
+    gl.uniform2f(this.uniforms.u_aspect, this.bos.height / this.bos.width, 1);
+  } else {
+    gl.uniform2f(this.uniforms.u_aspect, 1, 1);
   }
 
   // draw the layer on the screen
