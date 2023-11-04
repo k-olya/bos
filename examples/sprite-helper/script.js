@@ -1,3 +1,9 @@
+// this script allows user to select rectangular areas on the loaded spritesheet
+// use left mouse button to draw and mouse wheel to zoom and move around
+// writes a sprite object with the following properties to the console
+// u, v, w, h - sprite coordinates
+// x, y, scalex, scaley - position and scale relative to the spritesheet
+
 const ZOOM_BASE = 1.25;
 const ZOOM_CAP = 20;
 const PADDING = 0.2;
@@ -84,10 +90,12 @@ window.onload = function () {
   const glYToScreen = y =>
     ((y + centery * Math.pow(ZOOM_BASE, zoom) - 1) * window.innerWidth) / -2;
 
+  const round = (x, y) => Math.round(x * y) / y;
+
   window.addEventListener("mousedown", function (e) {
     if (e.button === 0) {
-      startx = Math.round(screenXToGl(e.clientX) * texturew) / texturew;
-      starty = Math.round(screenYToGl(e.clientY) * textureh) / textureh;
+      startx = round(screenXToGl(e.clientX), texturew / 2);
+      starty = round(screenYToGl(e.clientY), textureh / 2);
       down = true;
     } else if (e.button === 1) {
       drag = true;
@@ -98,10 +106,8 @@ window.onload = function () {
 
   window.addEventListener("mousemove", function (e) {
     if (down) {
-      selectionw =
-        Math.round(screenXToGl(e.clientX) * texturew) / texturew - startx;
-      selectionh =
-        Math.round(screenYToGl(e.clientY) * textureh) / textureh - starty;
+      selectionw = round(screenXToGl(e.clientX), texturew / 2) - startx;
+      selectionh = round(screenYToGl(e.clientY), textureh / 2) - starty;
 
       x = startx + selectionw / 2;
       y = starty + selectionh / 2;
@@ -154,10 +160,8 @@ window.onload = function () {
 
   window.addEventListener("mouseup", function (e) {
     if (down && e.button === 0) {
-      selectionw =
-        Math.round(screenXToGl(e.clientX) * texturew) / texturew - startx;
-      selectionh =
-        Math.round(screenYToGl(e.clientY) * textureh) / textureh - starty;
+      selectionw = round(screenXToGl(e.clientX), texturew / 2) - startx;
+      selectionh = round(screenYToGl(e.clientY), textureh / 2) - starty;
       down = false;
       if (selectionh > 0) {
         starty = starty + selectionh;
