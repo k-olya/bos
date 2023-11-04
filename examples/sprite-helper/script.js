@@ -180,7 +180,7 @@ window.onload = function () {
         x: 0.75,
         y: -0.75,
         // multiply by aspect ratio to get a nice looking sprite
-        scalex: (0.5 * canvas.height) / canvas.width,
+        scalex: (((0.5 * canvas.height) / canvas.width) * uvwh.w) / uvwh.h,
         scaley: 0.5,
       };
       console.log(JSON.stringify({ ...uvwh, x, y, scalex, scaley }));
