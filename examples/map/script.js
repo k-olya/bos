@@ -88,8 +88,7 @@ window.onload = function () {
       fpsSpan.innerHTML = frames * 4;
       fpsT = time;
       frames = 0;
-    }
-    frames++;
+    } else frames++;
   }
   render();
 
