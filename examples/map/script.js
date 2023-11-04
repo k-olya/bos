@@ -5,7 +5,7 @@ const MAX_VELOCITY = 0.5;
 const MIN_VELOCITY = 0.2;
 
 const QTY = 5e4;
-const UPDATE_CHUNK_SIZE = 1e3;
+const UPDATE_CHUNK_SIZE = QTY * 0.02;
 
 totalSpan.innerHTML = QTY;
 updatedSpan.innerHTML = UPDATE_CHUNK_SIZE;
