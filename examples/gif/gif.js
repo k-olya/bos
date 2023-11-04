@@ -13,9 +13,6 @@ window.onload = function () {
       c.y += a_all[2][2] *cos(u_time * .2 * 3.14 );
       // pos += mod(u_time * .2 * 3.14 * a_all[2][2], 2.) - 1.0;
     `,
-    customVarying: "",
-    customUniforms: "",
-    customFragmentShader: "",
   };
   bos.addLayer({
     ...config,

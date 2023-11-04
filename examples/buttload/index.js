@@ -21,9 +21,6 @@ window.onload = function () {
       // pos += mod(u_time * .2 * 3.14 * a_all[2][2], 2.) - 1.0;
     `
         : ``,
-    customVarying: "",
-    customUniforms: "",
-    customFragmentShader: "",
   };
   if (MODE === "cpu") {
     bos.addFastLayer(config);
