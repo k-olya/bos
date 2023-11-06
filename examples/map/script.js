@@ -1,3 +1,11 @@
+// in this example we create 50k moving objects with known velocities
+// and update them asynchronously by 1k at a time every 20ms
+// with every object updated each second
+
+// it simulates a real-world scenario
+// where you can (at least roughly) estimate objects' velocities
+// but the data needs to be transferred from a remote server
+
 const ZOOM_BASE = 1.25;
 const ZOOM_MAX = 10;
 const ZOOM_MIN = -4;
@@ -84,8 +92,8 @@ window.onload = function () {
 
     bos.render(time / 1000);
 
-    if (time - fpsT > 250) {
-      fpsSpan.innerHTML = frames * 4;
+    if (time - fpsT > 1000) {
+      fpsSpan.innerHTML = frames;
       fpsT = time;
       frames = 0;
     } else frames++;
