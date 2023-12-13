@@ -251,7 +251,7 @@ Layer.prototype.patchSprite = function (c, i = 0) {
       this.data[index + 6] = u / this.textureWidth;
     }
     if (c.v !== undefined) {
-      let v = c.v + (vertices[3] === "uvbottom" ? c.h : 0) || 0;
+      let v = c.v + (vertices[j][3] === "uvbottom" ? c.h : 0) || 0;
       this.data[index + 7] = 1 - v / this.textureHeight;
     }
     for (let k = 0; k < 6; k++) {
