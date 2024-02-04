@@ -87,7 +87,8 @@ Bos.prototype.render = function (time) {
   this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
   this.gl.viewport(0, 0, this.width, this.height);
   this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-  for (let layer of this.layers) {
+  const layers = this.layers.filter(l => l.visible);
+  for (let layer of layers) {
     layer.render(time);
   }
 };
@@ -110,6 +111,7 @@ function Layer(bos, options) {
   const gl = bos.gl;
   this.bos = bos;
   const opts = {
+    visible: true,
     image: null,
     textureFilter: gl.LINEAR,
     vertexAnimationCode: "",
@@ -126,6 +128,7 @@ function Layer(bos, options) {
   this.data = new Float32Array(this.size * SPRITE_FLOATS);
 
   this.textureFilter = opts.textureFilter;
+  this.visible = opts.visible;
   this.image = opts.image;
   this.textureWidth = opts.image.naturalWidth;
   this.textureHeight = opts.image.naturalHeight;
@@ -247,11 +250,11 @@ Layer.prototype.patchSprite = function (c, i = 0) {
       }
     }
     if (c.u !== undefined) {
-      let u = c.u + (vertices[j][2] === "uvright" ? c.w : 0) || 0;
+      let u = c.u + ((vertices[j][2] === "uvright" ? c.w : 0) || 0);
       this.data[index + 6] = u / this.textureWidth;
     }
     if (c.v !== undefined) {
-      let v = c.v + (vertices[j][3] === "uvbottom" ? c.h : 0) || 0;
+      let v = c.v + ((vertices[j][3] === "uvbottom" ? c.h : 0) || 0);
       this.data[index + 7] = 1 - v / this.textureHeight;
     }
     for (let k = 0; k < 6; k++) {
@@ -339,7 +342,7 @@ Layer.prototype.setUniforms = function (uniforms) {
 };
 
 Layer.prototype.setUniformsGL = function (uniforms) {
-  for (u in uniforms) {
+  for (let u in uniforms) {
     // if uniform is not used by the shader
     // skip iteration
     if (!this.uniforms[u]) continue;
