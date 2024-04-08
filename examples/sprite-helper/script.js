@@ -13,7 +13,7 @@ window.onload = function () {
   canvas.height = window.innerHeight;
   var gl = canvas.getContext("webgl2");
 
-  var bos = new Bos(gl, canvas.width, canvas.height, { aspect: false });
+  var bos = new Bos(gl, canvas.width, canvas.height);
 
   const config = {
     image: spritesheet,
@@ -23,6 +23,7 @@ window.onload = function () {
       c *= zoom;
       scale *= zoom;
     `,
+    aspect: false,
     customVarying: ``,
     customUniforms: {
       zoom: "mediump float",

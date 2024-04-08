@@ -52,7 +52,7 @@ window.onload = function () {
   // update sprites on mousemove
   window.addEventListener("mousemove", function (e) {
     // convert screen space (pixel) coordinates to gl's [-1; 1] space
-    const x = bos.canvasXtoGl(e.clientX);
+    const x = bos.canvasXtoGl(e.clientX, canvas.height / canvas.width);
     const y = bos.canvasYtoGl(e.clientY);
     // patch sprite rotation
     bos.layers[0].patchSprite(

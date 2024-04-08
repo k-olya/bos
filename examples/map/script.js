@@ -63,10 +63,12 @@ window.onload = function () {
     h: map.naturalHeight,
   });
 
+  const rand = (x, y) => Math.random() * (y - x) + x;
+
   const positions = [];
   const velocities = [];
   for (let i = 0; i < QTY; i++) {
-    positions.push([0, 0]);
+    positions.push([rand(-5, 5), rand(-5, 5)]);
     velocities.push([0, 0, performance.now() * 0.001]);
     bos.layers[1].addSprite({
       x: positions[i][0],

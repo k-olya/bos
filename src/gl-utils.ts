@@ -1,38 +1,71 @@
 // helper functions for webgl
+export type GLContext = WebGLRenderingContext | WebGL2RenderingContext;
+export type TexturePixels =
+  | ImageData
+  | HTMLImageElement
+  | HTMLCanvasElement
+  | HTMLVideoElement
+  | ImageBitmap
+  | ArrayBufferView;
+
+export interface TextureOptions {
+  framebuffer?: WebGLFramebuffer;
+  pixels?: TexturePixels | null;
+  minFilter?: number;
+  magFilter?: number;
+  wrapS?: number;
+  wrapT?: number;
+  flip?: boolean;
+  premultiply?: boolean;
+}
 
 // create and compile a shader
-function createShader(gl, type, source) {
-  var shader = gl.createShader(type);
+export function createShader(
+  gl: GLContext,
+  type: number,
+  source: string
+): WebGLShader | null {
+  var shader = gl.createShader(type)!;
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error("Shader compilation error:", gl.getShaderInfoLog(shader));
+    const status = "Shader compilation error: " + gl.getShaderInfoLog(shader);
     gl.deleteShader(shader);
-    return null;
+    throw new Error(status);
   }
 
   return shader;
 }
 
 // create and link a program
-function createProgram(gl, vertexShader, fragmentShader) {
-  var program = gl.createProgram();
+export function createProgram(
+  gl: GLContext,
+  vertexShader: WebGLShader,
+  fragmentShader: WebGLShader
+): WebGLProgram | null {
+  var program = gl.createProgram()!;
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error("Program linking error:", gl.getProgramInfoLog(program));
+    const status = "Program linking error: " + gl.getProgramInfoLog(program);
     gl.deleteProgram(program);
-    return null;
+    throw new Error(status);
   }
 
   return program;
 }
 
 // create and configure a texture
-function createTexture(gl, glTexture, width, height, options = null) {
+export function createTexture(
+  gl: GLContext,
+  glTexture: number,
+  width: number,
+  height: number,
+  options: TextureOptions
+): WebGLTexture {
   const opts = {
     framebuffer: null,
     pixels: null,
@@ -44,7 +77,7 @@ function createTexture(gl, glTexture, width, height, options = null) {
     premultiply: false,
     ...options,
   };
-  var texture = gl.createTexture();
+  var texture = gl.createTexture()!;
   gl.activeTexture(glTexture);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   if (opts.flip) {
@@ -62,6 +95,7 @@ function createTexture(gl, glTexture, width, height, options = null) {
     0,
     gl.RGBA,
     gl.UNSIGNED_BYTE,
+    // @ts-ignore
     opts.pixels || null
   );
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, opts.minFilter);
@@ -84,7 +118,7 @@ function createTexture(gl, glTexture, width, height, options = null) {
 }
 
 // full-screen triangle strip
-const defaultVertices = [
+export const defaultVertices = [
   -1.0,
   -1.0, // Bottom left corner
   1.0,
@@ -96,15 +130,26 @@ const defaultVertices = [
 ];
 
 // create a vertex buffer
-function createVertexBuffer(gl, vertices = defaultVertices) {
-  var buffer = gl.createBuffer();
+export function createVertexBuffer(
+  gl: GLContext,
+  vertices?: number[]
+): WebGLBuffer {
+  var buffer = gl.createBuffer()!;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    vertices ? new Float32Array(vertices) : null,
+    gl.STATIC_DRAW
+  );
   return buffer;
 }
 
 // pass current ARRAY_BUFFER to the vertex shader
-function enableVertexBuffer(gl, attribLocation, options = null) {
+export function enableVertexBuffer(
+  gl: GLContext,
+  attribLocation: number,
+  options?: any
+): void {
   const opts = {
     buffer: null,
     size: 2,
@@ -118,21 +163,36 @@ function enableVertexBuffer(gl, attribLocation, options = null) {
 }
 
 // fill entire screen
-function fillFramebuffer(gl, width, height, framebuffer = null) {
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+export function fillFramebuffer(
+  gl: GLContext,
+  width: number,
+  height: number,
+  framebuffer?: WebGLFramebuffer
+): void {
+  const _framebuffer: WebGLFramebuffer | null =
+    typeof framebuffer === "undefined" ? null : framebuffer;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, _framebuffer);
   gl.viewport(0, 0, width, height);
   // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
 // get all attribute and uniform locations at once in a nice little object
-function getAttribLocations(gl, program, ...args) {
+export function getAttribLocations(
+  gl: GLContext,
+  program: WebGLProgram,
+  ...args: string[]
+): { [key: string]: number } {
   return args.reduce(
     (a, v) => ({ ...a, [v]: gl.getAttribLocation(program, v) }),
     {}
   );
 }
-function getUniformLocations(gl, program, ...args) {
+export function getUniformLocations(
+  gl: GLContext,
+  program: WebGLProgram,
+  ...args: string[]
+): { [key: string]: WebGLUniformLocation | null } {
   return args.reduce(
     (a, v) => ({ ...a, [v]: gl.getUniformLocation(program, v) }),
     {}
