@@ -139,11 +139,11 @@ const uniformTypes = {
   vec2: "uniform2f",
   "lowp vec2": "uniform2f",
   "mediump vec2": "uniform2f",
-  "heghp vec2": "uniform2f",
+  "highp vec2": "uniform2f",
   vec3: "uniform3f",
   "lowp vec3": "uniform3f",
   "mediump vec3": "uniform3f",
-  "heighp vec3": "uniform3f",
+  "highp vec3": "uniform3f",
   "float[]": "uniform1fv",
   "lowp float[]": "uniform1fv",
   "mediump float[]": "uniform1fv",
@@ -191,7 +191,17 @@ export interface FramebufferTextureOptions {
 }
 
 // all supported uniform types
-export type UniformValue = number | number[];
+export type UniformValue =
+  | number
+  | number[]
+  | Float32Array
+  | Int32Array
+  | Float64Array
+  | Uint32Array
+  | Uint16Array
+  | Uint8Array
+  | Int16Array
+  | Int32Array;
 
 // float precision type
 export type FloatPrecision = "highp" | "mediump" | "lowp" | null;
@@ -277,6 +287,8 @@ export interface Layer {
   // set one sprite's data to 0
   // use it if you want to remove a sprite without changing other sprites' indices
   nullSprite: (start: number, len?: number) => void;
+  // read sprite data
+  readSpriteData: (i: number) => Partial<Sprite>;
   // set uniforms
   setUniforms: (uniforms: { [key: string]: UniformValue }) => void;
   // setUniformsGL: (uniforms: { [key: string]: UniformValue }) => void;
@@ -677,6 +689,15 @@ Layer.prototype.patchSprite = function (c: Partial<Sprite>, i = 0) {
       : i + 1;
 };
 
+Layer.prototype.readSpriteData = function (i: number = 0) {
+  const c = {} as Partial<Sprite>;
+  const index = i * SPRITE_FLOATS + 0 * 16;
+  for (let k = 0; k < 6; k++) {
+    c[attrOrder[k]] = this.data[index + k];
+  }
+  return c;
+};
+
 Layer.prototype.nullSprite = function (start: number, len: number = 1) {
   this.data.fill(0, start * SPRITE_FLOATS, len * SPRITE_FLOATS);
   this.dirty.vboStart =
@@ -819,7 +840,6 @@ Layer.prototype.setUniformsGL = function (uniforms: {
 }) {
   for (let u in uniforms) {
     if (!this.uniforms[u]) {
-      console.log("sas", u);
     }
     // if uniform is not used by the shader
     // skip iteration
@@ -834,7 +854,10 @@ Layer.prototype.setUniformsGL = function (uniforms: {
         `'${u}' has unrecognized type '${this.customUniforms[u]}'`
       );
     }
-    if (Array.isArray(uniforms[u]) && !this.customArrayUniformsLengths[u]) {
+    if (
+      typeof uniforms[u] === "object" &&
+      !this.customArrayUniformsLengths[u]
+    ) {
       // @ts-ignore
       this.gl[t](this.uniforms[u], ...uniforms[u]);
     } else {
