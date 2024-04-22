@@ -132,15 +132,15 @@ export const defaultVertices = [
 // create a vertex buffer
 export function createVertexBuffer(
   gl: GLContext,
-  vertices?: number[]
+  vertices?: number[] | Float32Array
 ): WebGLBuffer {
   var buffer = gl.createBuffer()!;
+  var _vertices;
+  if (vertices instanceof Array && !(vertices instanceof Float32Array)) {
+    _vertices = new Float32Array(vertices);
+  } else _vertices = vertices;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    vertices ? new Float32Array(vertices) : null,
-    gl.STATIC_DRAW
-  );
+  gl.bufferData(gl.ARRAY_BUFFER, _vertices ? _vertices : null, gl.STATIC_DRAW);
   return buffer;
 }
 
