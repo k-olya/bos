@@ -8,7 +8,6 @@ import {
   getUniformLocations,
   TexturePixels,
 } from "./gl-utils";
-import { DrawCall } from "./draw-call";
 import { FramebufferTexture } from "./framebuffer-texture";
 import {
   FloatPrecision,
@@ -31,7 +30,7 @@ const defIfUndef = <T>(v: T | undefined, d: T) => (v === undefined ? d : v);
 // each layer has its own vertex and fragment shaders
 // up to 8 textures (including framebuffer textures)
 // and an unlimited number of sprites
-export class Layer extends DrawCall {
+export class Layer {
   // parent bos instance
   bos: Bos;
   // webgl context
@@ -96,7 +95,6 @@ export class Layer extends DrawCall {
     vboEnd?: number;
   };
   constructor(bos: Bos, options: Partial<LayerOptions>) {
-    super();
     const gl = bos.gl;
     this.bos = bos;
     // @ts-ignore
