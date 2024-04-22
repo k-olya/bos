@@ -319,11 +319,11 @@ export class Layer extends DrawCall {
   }
   setUniformsGL(uniforms: { [key: string]: UniformValue }) {
     for (let u in uniforms) {
-      if (!this.uniforms[u]) {
+      if (!this._uniforms[u]) {
       }
       // if uniform is not used by the shader
       // skip iteration
-      if (!this.uniforms[u]) continue;
+      if (!this._uniforms[u]) continue;
       if (!this.customUniformsList.includes(u)) {
         throw new Error(`'${u}' not found in layer's uniforms list`);
       }
@@ -339,10 +339,10 @@ export class Layer extends DrawCall {
         !this.customArrayUniformsLengths[u]
       ) {
         // @ts-ignore
-        this.gl[t](this.uniforms[u], ...uniforms[u]);
+        this.gl[t](this._uniforms[u], ...uniforms[u]);
       } else {
         // @ts-ignore
-        this.gl[t](this.uniforms[u], uniforms[u]);
+        this.gl[t](this._uniforms[u], uniforms[u]);
       }
     }
   }
@@ -368,7 +368,7 @@ export class Layer extends DrawCall {
       })
       .join("");
     if (typeof this.customVertexShader === "function") {
-      this.vertexShader = createShader(
+      this._vertexShader = createShader(
         gl,
         gl.VERTEX_SHADER,
         this.customVertexShader(
@@ -382,7 +382,7 @@ export class Layer extends DrawCall {
         )
       );
     } else {
-      this.vertexShader = createShader(
+      this._vertexShader = createShader(
         gl,
         gl.VERTEX_SHADER,
         vertexShaderSource(
@@ -395,7 +395,7 @@ export class Layer extends DrawCall {
       );
     }
     if (typeof this.customFragmentShader === "function") {
-      this.fragmentShader = createShader(
+      this._fragmentShader = createShader(
         gl,
         gl.FRAGMENT_SHADER,
         this.customFragmentShader(
@@ -403,7 +403,7 @@ export class Layer extends DrawCall {
         )
       );
     } else {
-      this.fragmentShader = createShader(
+      this._fragmentShader = createShader(
         gl,
         gl.FRAGMENT_SHADER,
         fragmentShaderSource(
@@ -412,11 +412,15 @@ export class Layer extends DrawCall {
         )
       );
     }
-    this.program = createProgram(gl, this.vertexShader!, this.fragmentShader!);
-    this.attribute = gl.getAttribLocation(this.program!, "a_all");
-    this.uniforms = getUniformLocations(
+    this._program = createProgram(
       gl,
-      this.program!,
+      this._vertexShader!,
+      this._fragmentShader!
+    );
+    this._attribute = gl.getAttribLocation(this._program!, "a_all");
+    this._uniforms = getUniformLocations(
+      gl,
+      this._program!,
       "u_time",
       "u_texture0",
       "u_texture1",
@@ -436,14 +440,14 @@ export class Layer extends DrawCall {
   }
   // create vertex buffer object
   createvbo() {
-    this.vertexBuffer = createVertexBuffer(this.gl, this.data);
+    this._vertexBuffer = createVertexBuffer(this.gl, this.data);
     this.dirty.vbo = false;
     this.dirty.vboStart = undefined;
     this.dirty.vboEnd = undefined;
   }
   // update the image texture
   createTexture() {
-    if (!this.texture) this.texture = [];
+    if (!this._texture) this._texture = [];
     const images = Array.isArray(this.image) ? this.image : [this.image];
     for (let i = 0; i < images.length; i++) {
       this.updateImage(i);
@@ -466,13 +470,13 @@ export class Layer extends DrawCall {
     // bind canvas framebuffer
     // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     // select render shader
-    gl.useProgram(this.program);
+    gl.useProgram(this._program);
     // pass attriputes
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
     for (let i = 0; i < 4; i++) {
-      gl.enableVertexAttribArray(this.attribute + i);
+      gl.enableVertexAttribArray(this._attribute + i);
       gl.vertexAttribPointer(
-        this.attribute + i,
+        this._attribute + i,
         4,
         gl.FLOAT,
         false,
@@ -482,27 +486,27 @@ export class Layer extends DrawCall {
     }
     let t = 0;
     // set textures
-    for (t; t < this.texture!.length; t++) {
+    for (t; t < this._texture!.length; t++) {
       // @ts-expect-error
       gl.activeTexture(gl[`TEXTURE${t}`]);
-      gl.bindTexture(gl.TEXTURE_2D, this.texture![t]);
-      gl.uniform1i(this.uniforms[`u_texture${t}`], t);
+      gl.bindTexture(gl.TEXTURE_2D, this._texture![t]);
+      gl.uniform1i(this._uniforms[`u_texture${t}`], t);
     }
     // set framebuffer textures
     if (!Array.isArray(this.framebufferTexture)) {
       // @ts-expect-error
       gl.activeTexture(gl[`TEXTURE${t}`]);
       gl.bindTexture(gl.TEXTURE_2D, this.framebufferTexture.texture);
-      gl.uniform1i(this.uniforms[`u_texture${t}`], t);
+      gl.uniform1i(this._uniforms[`u_texture${t}`], t);
     } else {
       for (let j = 0; j < this.framebufferTexture.length; j++) {
         // @ts-expect-error
         gl.activeTexture(gl[`TEXTURE${t + j}`]);
         gl.bindTexture(gl.TEXTURE_2D, this.framebufferTexture[j].texture);
-        gl.uniform1i(this.uniforms[`u_texture${t + j}`], t + j);
+        gl.uniform1i(this._uniforms[`u_texture${t + j}`], t + j);
       }
     }
-    gl.uniform1f(this.uniforms.u_time, time || 0);
+    gl.uniform1f(this._uniforms.u_time, time || 0);
 
     // pass user uniforms to the shader
     if (this.uniformValues) {
@@ -511,11 +515,11 @@ export class Layer extends DrawCall {
 
     // pass aspect ratio
     if (typeof this.aspect === "number") {
-      gl.uniform2f(this.uniforms.u_aspect, this.aspect, 1);
+      gl.uniform2f(this._uniforms.u_aspect, this.aspect, 1);
     } else if (this.aspect) {
-      gl.uniform2f(this.uniforms.u_aspect, this.height / this.width, 1);
+      gl.uniform2f(this._uniforms.u_aspect, this.height / this.width, 1);
     } else {
-      gl.uniform2f(this.uniforms.u_aspect, 1, 1);
+      gl.uniform2f(this._uniforms.u_aspect, 1, 1);
     }
 
     // bind output framebuffer
@@ -527,19 +531,19 @@ export class Layer extends DrawCall {
   }
 
   // private properties
-  private vertexShader: WebGLShader | null = null;
-  private fragmentShader: WebGLShader | null = null;
-  private program: WebGLProgram | null = null;
-  private attribute: number = 0;
-  private vertexBuffer: WebGLBuffer | null = null;
-  private texture: WebGLTexture[] | null = null;
-  private uniforms: UniformLocations = {};
+  private _vertexShader: WebGLShader | null = null;
+  private _fragmentShader: WebGLShader | null = null;
+  private _program: WebGLProgram | null = null;
+  private _attribute: number = 0;
+  private _vertexBuffer: WebGLBuffer | null = null;
+  private _texture: WebGLTexture[] | null = null;
+  private _uniforms: UniformLocations = {};
   // update the image texture
   private updateImage(i: number = 0) {
-    if (!this.texture) this.texture = [];
-    if (this.texture[i]) this.gl.deleteTexture(this.texture[i]);
+    if (!this._texture) this._texture = [];
+    if (this._texture[i]) this.gl.deleteTexture(this._texture[i]);
     const image = Array.isArray(this.image) ? this.image[i] : this.image;
-    this.texture[i] = createTexture(
+    this._texture[i] = createTexture(
       this.gl,
       this.gl.TEXTURE0,
       this.textureWidth,

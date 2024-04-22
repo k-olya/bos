@@ -75,13 +75,11 @@ export class Bos {
   }
 
   // utils
-  static Utils = {
-    createProgram,
-    createShader,
-    createTexture,
-    createVertexBuffer,
-    getUniformLocations,
-  };
+  static createProgram = createProgram;
+  static createShader = createShader;
+  static createTexture = createTexture;
+  static createVertexBuffer = createVertexBuffer;
+  static getUniformLocations = getUniformLocations;
   // export classes
   static FramebufferTexture = FramebufferTexture;
   static Layer = Layer;
